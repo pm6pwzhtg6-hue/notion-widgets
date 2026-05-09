@@ -7,23 +7,23 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
+  html, body {
     background: #1a1a1a;
     color: #e8e8e8;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
   }
   .wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
-    padding: 2rem 1rem;
+    gap: 0.75rem;
+    padding: 0.5rem;
     width: 100%;
-    max-width: 320px;
   }
   .mode-tabs { display: flex; gap: 8px; }
   .tab {
@@ -41,17 +41,17 @@
     color: #e8e8e8;
     border-color: #666;
   }
-  .ring-wrap { position: relative; width: 180px; height: 180px; }
-  svg.ring { width: 180px; height: 180px; transform: rotate(-90deg); }
+  .ring-wrap { position: relative; width: 140px; height: 140px; }
+  svg.ring { width: 140px; height: 140px; transform: rotate(-90deg); }
   .ring-bg { fill: none; stroke: #2e2e2e; stroke-width: 8; }
   .ring-fg { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset .5s linear; }
   .time-display {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 4px;
+    align-items: center; justify-content: center; gap: 2px;
   }
-  .time { font-size: 38px; font-weight: 400; color: #e8e8e8; letter-spacing: -1px; }
-  .mode-lbl { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: .1em; }
+  .time { font-size: 28px; font-weight: 400; color: #e8e8e8; letter-spacing: -1px; }
+  .mode-lbl { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: .1em; }
   .controls { display: flex; gap: 12px; align-items: center; }
   .btn {
     width: 44px; height: 44px; border-radius: 50%;
@@ -76,10 +76,10 @@
     <button class="tab" onclick="setMode('long',15)">Long break</button>
   </div>
   <div class="ring-wrap">
-    <svg class="ring" viewBox="0 0 180 180">
-      <circle class="ring-bg" cx="90" cy="90" r="80"/>
-      <circle class="ring-fg" id="arc" cx="90" cy="90" r="80"
-        stroke="#EF9F27" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+    <svg class="ring" viewBox="0 0 140 140">
+      <circle class="ring-bg" cx="70" cy="70" r="60"/>
+      <circle class="ring-fg" id="arc" cx="70" cy="70" r="60"
+        stroke="#EF9F27" stroke-dasharray="376.99" stroke-dashoffset="0"/>
     </svg>
     <div class="time-display">
       <span class="time" id="display">25:00</span>
@@ -99,7 +99,7 @@
   </div>
 </div>
 <script>
-  const CIRC = 502.65;
+  const CIRC = 376.99;
   const colors = { work: '#EF9F27', short: '#BA7517', long: '#854F0B' };
   const labels = { work: 'Focus', short: 'Short break', long: 'Long break' };
   let totalSecs = 25*60, remaining = 25*60, running = false, interval = null, mode = 'work', sessions = 0;
