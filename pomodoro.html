@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomodoro</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a1a;
+    color: #e8e8e8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem 1rem;
+    width: 100%;
+    max-width: 320px;
+  }
+  .mode-tabs { display: flex; gap: 8px; }
+  .tab {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 0.5px solid #444;
+    background: transparent;
+    color: #888;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .tab.active {
+    background: #2a2a2a;
+    color: #e8e8e8;
+    border-color: #666;
+  }
+  .ring-wrap { position: relative; width: 180px; height: 180px; }
+  svg.ring { width: 180px; height: 180px; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: #2e2e2e; stroke-width: 8; }
+  .ring-fg { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset .5s linear; }
+  .time-display {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+  }
+  .time { font-size: 38px; font-weight: 400; color: #e8e8e8; letter-spacing: -1px; }
+  .mode-lbl { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: .1em; }
+  .controls { display: flex; gap: 12px; align-items: center; }
+  .btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 0.5px solid #444; background: transparent;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; color: #e8e8e8; font-size: 18px;
+    transition: background .15s;
+  }
+  .btn:hover { background: #2a2a2a; }
+  .btn.primary { width: 52px; height: 52px; font-size: 22px; }
+  .dots { display: flex; gap: 6px; align-items: center; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #333; transition: background .3s; }
+  .dot.done { background: #888; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Pomodoro timer</h2>
+  <div class="mode-tabs">
+    <button class="tab active" onclick="setMode('work',25)">Pomodoro</button>
+    <button class="tab" onclick="setMode('short',5)">Short break</button>
+    <button class="tab" onclick="setMode('long',15)">Long break</button>
+  </div>
+  <div class="ring-wrap">
+    <svg class="ring" viewBox="0 0 180 180">
+      <circle class="ring-bg" cx="90" cy="90" r="80"/>
+      <circle class="ring-fg" id="arc" cx="90" cy="90" r="80"
+        stroke="#EF9F27" stroke-dasharray="502.65" stroke-dashoffset="0"/>
+    </svg>
+    <div class="time-display">
+      <span class="time" id="display">25:00</span>
+      <span class="mode-lbl" id="mode-label">Focus</span>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" onclick="reset()" aria-label="Reset"><i class="ti ti-refresh"></i></button>
+    <button class="btn primary" id="playbtn" onclick="toggle()" aria-label="Start"><i class="ti ti-player-play" id="playicon"></i></button>
+    <button class="btn" onclick="skip()" aria-label="Skip"><i class="ti ti-player-skip-forward"></i></button>
+  </div>
+  <div class="dots" id="dots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+</div>
+<script>
+  const CIRC = 502.65;
+  const colors = { work: '#EF9F27', short: '#BA7517', long: '#854F0B' };
+  const labels = { work: 'Focus', short: 'Short break', long: 'Long break' };
+  let totalSecs = 25*60, remaining = 25*60, running = false, interval = null, mode = 'work', sessions = 0;
+
+  function fmt(s) {
+    return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }
+  function render() {
+    document.getElementById('display').textContent = fmt(remaining);
+    document.getElementById('arc').style.strokeDashoffset = CIRC * (1 - remaining / totalSecs);
+  }
+  function setMode(m, mins) {
+    mode = m; totalSecs = mins * 60; remaining = mins * 60;
+    clearInterval(interval); running = false;
+    document.getElementById('playicon').className = 'ti ti-player-play';
+    document.getElementById('arc').setAttribute('stroke', colors[m]);
+    document.getElementById('mode-label').textContent = labels[m];
+    document.querySelectorAll('.tab').forEach((t, i) =>
+      t.classList.toggle('active', ['work','short','long'][i] === m));
+    render();
+  }
+  function toggle() {
+    if (running) {
+      clearInterval(interval); running = false;
+      document.getElementById('playicon').className = 'ti ti-player-play';
+    } else {
+      running = true;
+      document.getElementById('playicon').className = 'ti ti-player-pause';
+      interval = setInterval(() => {
+        if (remaining <= 0) {
+          clearInterval(interval); running = false;
+          document.getElementById('playicon').className = 'ti ti-player-play';
+          if (mode === 'work') { sessions = Math.min(sessions + 1, 4); updateDots(); }
+          return;
+        }
+        remaining--; render();
+      }, 1000);
+    }
+  }
+  function reset() {
+    clearInterval(interval); running = false; remaining = totalSecs;
+    document.getElementById('playicon').className = 'ti ti-player-play';
+    render();
+  }
+  function skip() {
+    clearInterval(interval); running = false; remaining = 0;
+    document.getElementById('playicon').className = 'ti ti-player-play';
+    render();
+  }
+  function updateDots() {
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('done', i < sessions));
+  }
+  render();
+</script>
+</body>
+</html>
