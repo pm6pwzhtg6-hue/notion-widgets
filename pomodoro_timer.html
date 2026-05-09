@@ -1,0 +1,86 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.wrap{display:flex;flex-direction:column;align-items:center;padding:2rem 1rem;gap:1.5rem}
+.mode-tabs{display:flex;gap:8px}
+.tab{padding:6px 16px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);font-size:13px;cursor:pointer;transition:all .15s}
+.tab.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.ring-wrap{position:relative;width:180px;height:180px}
+svg.ring{width:180px;height:180px;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--color-border-tertiary);stroke-width:8}
+.ring-fg{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s linear}
+.time-display{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.time{font-size:36px;font-weight:500;color:var(--color-text-primary);letter-spacing:-1px}
+.label{font-size:11px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.08em}
+.controls{display:flex;gap:12px;align-items:center}
+.btn{width:44px;height:44px;border-radius:50%;border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-primary);font-size:18px;transition:background .15s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn.primary{width:52px;height:52px;font-size:22px}
+.count{display:flex;gap:6px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--color-border-secondary)}
+.dot.done{background:var(--color-text-secondary)}
+</style>
+<div class="wrap">
+  <h2 class="sr-only">Pomodoro timer with work and break modes</h2>
+  <div class="mode-tabs">
+    <button class="tab active" onclick="setMode('work',25)">Pomodoro</button>
+    <button class="tab" onclick="setMode('short',5)">Short break</button>
+    <button class="tab" onclick="setMode('long',15)">Long break</button>
+  </div>
+  <div class="ring-wrap">
+    <svg class="ring" viewBox="0 0 180 180">
+      <circle class="ring-bg" cx="90" cy="90" r="80"/>
+      <circle class="ring-fg" id="arc" cx="90" cy="90" r="80" stroke="#1D9E75"
+        stroke-dasharray="502.65" stroke-dashoffset="0"/>
+    </svg>
+    <div class="time-display">
+      <span class="time" id="display">25:00</span>
+      <span class="label" id="mode-label">Focus</span>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" onclick="reset()" aria-label="Reset"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+    <button class="btn primary" id="playbtn" onclick="toggle()" aria-label="Start"><i class="ti ti-player-play" id="playicon" aria-hidden="true"></i></button>
+    <button class="btn" onclick="skip()" aria-label="Skip"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
+  </div>
+  <div class="count" id="dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+<script>
+const CIRC=502.65;
+let totalSecs=25*60,remaining=25*60,running=false,interval=null,mode='work',sessions=0;
+const colors={work:'#1D9E75',short:'#378ADD',long:'#7F77DD'};
+const labels={work:'Focus',short:'Short break',long:'Long break'};
+
+function fmt(s){const m=Math.floor(s/60);const sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`}
+function render(){
+  document.getElementById('display').textContent=fmt(remaining);
+  const pct=remaining/totalSecs;
+  document.getElementById('arc').style.strokeDashoffset=CIRC*(1-pct);
+}
+function setMode(m,mins){
+  mode=m;totalSecs=mins*60;remaining=mins*60;
+  clearInterval(interval);running=false;
+  document.getElementById('playicon').className='ti ti-player-play';
+  document.getElementById('arc').setAttribute('stroke',colors[m]);
+  document.getElementById('mode-label').textContent=labels[m];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['work','short','long'][i]===m));
+  render();
+}
+function toggle(){
+  if(running){clearInterval(interval);running=false;document.getElementById('playicon').className='ti ti-player-play';}
+  else{running=true;document.getElementById('playicon').className='ti ti-player-pause';
+    interval=setInterval(()=>{
+      if(remaining<=0){clearInterval(interval);running=false;
+        document.getElementById('playicon').className='ti ti-player-play';
+        if(mode==='work'){sessions=Math.min(sessions+1,4);updateDots();}
+        return;}
+      remaining--;render();
+    },1000);}
+}
+function reset(){clearInterval(interval);running=false;remaining=totalSecs;document.getElementById('playicon').className='ti ti-player-play';render();}
+function skip(){clearInterval(interval);running=false;remaining=0;render();document.getElementById('playicon').className='ti ti-player-play';}
+function updateDots(){const dots=document.querySelectorAll('.dot');dots.forEach((d,i)=>d.classList.toggle('done',i<sessions));}
+render();
+</script>
